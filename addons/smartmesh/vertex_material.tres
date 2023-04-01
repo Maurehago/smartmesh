@@ -1,0 +1,36 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://cmycn44q0yeuj"]
+
+[sub_resource type="Shader" id="Shader_73ee6"]
+code = "// NOTE: Shader automatically converted from Godot Engine 4.0.beta14's StandardMaterial3D.
+
+shader_type spatial;
+render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx;
+uniform vec4 albedo : source_color;
+uniform float roughness : hint_range(0,1);
+uniform float specular;
+uniform float metallic;
+
+
+void vertex() {
+	if (!OUTPUT_IS_SRGB) {
+		COLOR.rgb = mix(pow((COLOR.rgb + vec3(0.055)) * (1.0 / (1.0 + 0.055)), vec3(2.4)), COLOR.rgb * (1.0 / 12.92), lessThan(COLOR.rgb, vec3(0.04045)));
+	}
+}
+
+void fragment() {
+	vec2 base_uv = UV;
+	ALBEDO = (albedo * COLOR).rgb;
+	METALLIC = metallic;
+	ROUGHNESS = roughness;
+	SPECULAR = specular;
+}
+"
+
+[resource]
+resource_name = "vertex_r9"
+render_priority = 0
+shader = SubResource("Shader_73ee6")
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/roughness = 1.0
+shader_parameter/specular = 0.5
+shader_parameter/metallic = 0.0
