@@ -1,4 +1,4 @@
-[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://cmycn44q0yeuj"]
+[gd_resource type="ShaderMaterial" format=3 uid="uid://cmycn44q0yeuj"]
 
 [sub_resource type="Shader" id="Shader_73ee6"]
 code = "// NOTE: Shader automatically converted from Godot Engine 4.0.beta14's StandardMaterial3D.
@@ -19,7 +19,8 @@ void vertex() {
 
 void fragment() {
 	vec2 base_uv = UV;
-	ALBEDO = (albedo * COLOR).rgb;
+	//ALBEDO = (albedo * COLOR).rgb;
+	ALBEDO = COLOR.rgb;
 	METALLIC = metallic;
 	ROUGHNESS = roughness;
 	SPECULAR = specular;

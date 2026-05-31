@@ -1,9 +1,12 @@
 @tool
+@icon("res://addons/smartmesh/csg_icon.svg")
 extends CSGCombiner3D
 class_name SmartCSG3D
 
 @export_category("Smart Instance")
-@export var mesh_instance: bool = false : set = _mesh_instance
+@export_tool_button("Mesh to Smartmesh", "Mesh")
+var import_button = create_instance
+#@export var mesh_instance: bool = false : set = _mesh_instance
 
 var parent: Node3D
 
@@ -13,18 +16,17 @@ func _ready():
 	pass # Replace with function body.
 
 
-func _mesh_instance(value):
-	if value:
-		create_instance()
-		mesh_instance = false
+#func _mesh_instance(value):
+	#if value:
+		#create_instance()
+		#mesh_instance = false
 
 func create_instance():
 	self._update_shape()
 	var mesh_info = self.get_meshes()
 	var mesh = mesh_info[1]
-	var smartInstance = SmartInstance3D.new()
-	smartInstance.mesh = mesh
-	parent.add_child(smartInstance)
-	smartInstance.owner = self.owner
-	smartInstance.transform = mesh_info[0]
-	
+	var mesh_instance = MeshInstance3D.new()
+	mesh_instance.mesh = mesh
+	parent.add_child(mesh_instance)
+	mesh_instance.owner = self.owner
+	mesh_instance.transform = mesh_info[0]
