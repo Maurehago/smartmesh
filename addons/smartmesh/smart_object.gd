@@ -2,8 +2,7 @@ extends Resource
 class_name SmartObject
 
 # Mesh Type
-@export_storage var mesh_type: String = "box"
-@export_storage var mesh_number: int = 0
+@export_storage var mesh_id: String = "box"
 
 # Größe des Objektes
 @export_storage var size: Vector3 = Vector3.ONE

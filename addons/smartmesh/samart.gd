@@ -2,6 +2,8 @@
 extends Object
 class_name Smart
 
+static var BASE_PATH = "res://addons/smartmesh/mesh/"
+
 # ================================
 #   Materials
 # ------------
@@ -115,12 +117,38 @@ static func load_smartdata_list(ordner_pfad: String = "res://bauteile/") -> Dict
 	return geladene_bauteile
 	
 
+# Hilfsfunktion, die alle Dateinamen (MeshIDs) aus einem spezifischen Unterordner holt
+# Holt die Ressourcen und gibt sie inklusive Unterordner zurück!
+static func get_resources_for_group(group_name: String) -> PackedStringArray:
+	var result := PackedStringArray()
+	var ordner_pfad = BASE_PATH + group_name + "/"
+	
+	if not DirAccess.dir_exists_absolute(ordner_pfad):
+		return result
+		
+	var dir = DirAccess.open(ordner_pfad)
+	if dir:
+		dir.list_dir_begin()
+		var file_name = dir.get_next()
+		while file_name != "":
+			if not dir.current_is_dir() and file_name.ends_with(".tres"):
+				# Hier kombinieren wir Gruppen-Ordner und Dateiname!
+				# Ergebnis: "tisch_platten/holz_platte_01"
+				var kombinierte_id = group_name + "/" + file_name.get_basename()
+				result.append(kombinierte_id)
+			file_name = dir.get_next()
+		dir.list_dir_end()
+	
+	return result
+
+
+
 # ================================
 #   Objects
 # -----------
 
 ## Liefert ein SmartObjekt mit angegebener Größe zurück
-static func calc_size(container_size, color_mask:float = 0) -> SmartObject:
+static func calc_size(container_size:Vector3, color_mask:float = 0) -> SmartObject:
 	var obj = SmartObject.new()
 	obj.size = container_size
 	obj.color_mask = color_mask
@@ -128,7 +156,7 @@ static func calc_size(container_size, color_mask:float = 0) -> SmartObject:
 
 
 ## Fügt die Elemente aus 'list_to_append' an 'base_list' an. 'base_list' wird dabei direkt modifiziert.
-static func append_smartObjects(base_list: Array[SmartObject], list_to_append: Array[SmartObject], offset:Vector3 = Vector3.ZERO) -> void:
+static func append_smartObjects(base_list: Array[SmartObject], list_to_append: Array[SmartObject], offset:Vector3 = Vector3.ZERO, mesh_id:int = 0) -> void:
 	# Durchfahre alle Elemente der Vorlagen-Liste
 	for element in list_to_append:
 		if not element: 
@@ -139,6 +167,9 @@ static func append_smartObjects(base_list: Array[SmartObject], list_to_append: A
 		
 		# Position um den aktuellen Versatz verschieben
 		new_element.pos += offset
+		
+		# Mesh_number setzen
+		new_element.mesh_number = mesh_id
 		
 		# Direkt an die existierende Basis-Liste anhängen
 		base_list.append(new_element)
@@ -331,6 +362,7 @@ static func split_3d_surface(container:SmartObject, holes: Array[SmartObject], a
 		var rect_center_2d = rect.position + (rect.size / 2.0)
 		var new_obj = SmartObject.new()
 		new_obj.color_mask = container.color_mask
+		new_obj.mesh_number = container.mesh_number
 		new_obj.pos = container.pos
 		new_obj.pos[axis_width] += rect_center_2d.x
 		new_obj.pos[axis_height] += rect_center_2d.y
@@ -365,42 +397,42 @@ static func split_3d_surface(container:SmartObject, holes: Array[SmartObject], a
 #var wall_blocks = split_3d_surface(wall_pos, wall_size, holes, 0, 1, 2)
 
 
-# SurfaceTool aus Liste mit SmartObject erstellen
-static func create_surfacetool(smartboxes: Array[SmartObject], st:SurfaceTool = null) -> SurfaceTool:
-	# Surfacetool zum zusammenbauen
-	#var st = SurfaceTool.new()
-	if !st:
-		st = SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	
-	# alle Smat Boxen durchgehen
-	for box in smartboxes:
-		var m
-		var basis = Basis() # kann Später Skaliert und rotiert werden
-		
-		# Je nach MeshType ein Mesh erzeugen
-		match box.mesh_type:
-			"box":
-				if !boxMesh: boxMesh = BoxMesh.new()
-				m = boxMesh
-				m.size = box.size
-		
-		# Farbe setzen und Mesch hinzufügen
-		st.set_color(get_mask_color(box.color_mask))
-		st.append_from(m, 0, Transform3D(basis, box.pos))
-	
-	return st
-
-# Mesh aus Liste mit SmartObjecten erstellen
-static func create_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null, st:SurfaceTool = null) -> ArrayMesh:
-	# Mesh prüfen
-	if !mesh: mesh = ArrayMesh.new()
-	
-	# Surfacetool zusammenbauen
-	st = create_surfacetool(smartboxes, st)
-
-	mesh.clear_surfaces()
-	return st.commit(mesh)
+## SurfaceTool aus Liste mit SmartObject erstellen
+#static func create_surfacetool(smartboxes: Array[SmartObject], st:SurfaceTool = null) -> SurfaceTool:
+	## Surfacetool zum zusammenbauen
+	##var st = SurfaceTool.new()
+	#if !st:
+		#st = SurfaceTool.new()
+		#st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	#
+	## alle Smat Boxen durchgehen
+	#for box in smartboxes:
+		#var m
+		#var basis = Basis() # kann Später Skaliert und rotiert werden
+		#
+		## Je nach MeshType ein Mesh erzeugen
+		#match box.mesh_type:
+			#"box":
+				#if !boxMesh: boxMesh = BoxMesh.new()
+				#m = boxMesh
+				#m.size = box.size
+		#
+		## Farbe setzen und Mesch hinzufügen
+		#st.set_color(get_mask_color(box.color_mask))
+		#st.append_from(m, 0, Transform3D(basis, box.pos))
+	#
+	#return st
+#
+## Mesh aus Liste mit SmartObjecten erstellen
+#static func create_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null, st:SurfaceTool = null) -> ArrayMesh:
+	## Mesh prüfen
+	#if !mesh: mesh = ArrayMesh.new()
+	#
+	## Surfacetool zusammenbauen
+	#st = create_surfacetool(smartboxes, st)
+#
+	#mesh.clear_surfaces()
+	#return st.commit(mesh)
 
 ## VertexPunkte Skalieren
 static func change_vertex_scale(vertices: PackedVector3Array, source_size: Vector3, target_size: Vector3, save_area: Vector3) -> PackedVector3Array:
@@ -461,6 +493,16 @@ static func generate_color_array(vertex_count: int, color: Color) -> PackedColor
 	return colors
 
 
+static func get_smartmesh(id:String) -> SmartMesh:
+	# Pfad zusammenbauen
+	var res_pfad = BASE_PATH + id + ".tres"
+	
+	if ResourceLoader.exists(res_pfad):
+		return load(res_pfad)
+	
+	return null
+
+
 ## Mesh von SmartObject und SmartMesh erzeugen
 static func smart_to_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null, smart_mesh_list:Array[SmartMesh] = []) -> ArrayMesh:
 	# Mesh prüfen
@@ -472,10 +514,20 @@ static func smart_to_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null
 	# Liste mit Farben
 	var colors:PackedColorArray = []
 
+	# debug
+	#print("SmartBoxes[0].size:", smartboxes[0].size)
+
 	# alle Smart Boxen durchgehen
 	for box in smartboxes:
+		# Wenn keine mesh_id
+		if !box.mesh_id:
+			continue # nächste box
+
 		# Smart Mesh zum Hinzufügen laden
-		var box_mesh:SmartMesh = smart_mesh_list[box.mesh_number]
+		var box_mesh:SmartMesh = get_smartmesh(box.mesh_id)
+		if !box_mesh:
+			continue # nächste Box
+		
 		var pos_and_scale:Transform3D = Transform3D(Basis(), box.pos) # kann Später Skaliert und rotiert werden
 
 		var vertices:PackedVector3Array
@@ -487,6 +539,9 @@ static func smart_to_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null
 		else:
 			# Skalierung
 			vertices = change_vertex_scale(box_mesh.vertices, box_mesh.base_size, box.size, box_mesh.save_area)
+		
+		if vertices.size() <= 0:
+			continue
 		
 		# Indizes korrigieren: Teil 2 muss um die Länge von Teil 1 verschoben werden
 		# Alte größe zum Verschieben merken
@@ -529,13 +584,16 @@ static func smart_to_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null
 	mesh_arrays[Mesh.ARRAY_COLOR] = colors
 	
 	# SurfaceTool für die Normalen
-	var st:SurfaceTool = SurfaceTool.new()
-	st.create_from_arrays(mesh_arrays)
-	#st.generate_normals() # todo: Einstellbar?
-	#st.generate_tangents() # Geht nur mit UV's
-	
-	mesh.clear_surfaces()
-	st.commit(mesh)
+	if mesh_arrays and mesh_arrays[Mesh.ARRAY_VERTEX].size() > 0:
+		var st:SurfaceTool = SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		st.create_from_arrays(mesh_arrays)
+		#st.generate_normals() # todo: Einstellbar?
+		#st.generate_tangents() # Geht nur mit UV's
+		
+		mesh.clear_surfaces()
+		st.commit(mesh)
+
 	return mesh
 
 

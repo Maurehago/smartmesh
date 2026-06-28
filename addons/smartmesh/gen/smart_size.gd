@@ -1,3 +1,4 @@
+@tool
 extends SmartGen
 class_name SmartSize
 

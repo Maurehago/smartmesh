@@ -3,6 +3,8 @@ extends SmartGen
 class_name SmartWall
 
 @export_group("Wall")
+@export_range(0.0,5.0,1.0) var wall_mesh_number:float = 0.0:
+	set(v):wall_mesh_number = v; emit_changed()
 @export_range(0.5,8.0,0.1) var wall_width:float = 4.0:
 	set(v):wall_width = v; emit_changed()
 @export_range(0.5,8.0,0.1) var wall_height:float = 3.0:
@@ -11,6 +13,8 @@ class_name SmartWall
 	set(v):wall_deph = v; emit_changed()
 
 @export_group("Window")
+@export_range(0.0,5.0,1.0) var window_mesh_number:float = 0.0:
+	set(v):window_mesh_number = v; emit_changed()
 @export_range(0.2,3.0,0.1) var window_width:float = 0.8:
 	set(v):window_width = v; emit_changed()
 @export_range(0.2,5.0,0.1) var window_height:float = 1.2:
@@ -39,6 +43,7 @@ class_name SmartWall
 func generate() -> Array[SmartObject]:
 	var list:Array[SmartObject] = []
 	var wall = Smart.calc_size(Vector3(wall_width, wall_height, wall_deph), color_mask)
+	wall.mesh_number = wall_mesh_number
 	
 	# Wenn keine Fenster
 	if window_pos.size() <= 0 and door_pos.size() <= 0:
@@ -63,7 +68,7 @@ func generate() -> Array[SmartObject]:
 		window_list.append(obj)
 		
 		# Fenster Teile hinzufügen
-		Smart.append_smartObjects(list, window_parts, obj.pos)
+		Smart.append_smartObjects(list, window_parts, obj.pos, window_mesh_number)
 		pass
 	
 	# Door
