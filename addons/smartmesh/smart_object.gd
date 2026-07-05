@@ -11,7 +11,11 @@ class_name SmartObject
 @export_storage var pos: Vector3 = Vector3.ZERO
 
 # Rotation des Objektes
-@export_storage var rotate: Vector3 = Vector3.ZERO
+@export_storage var target_up: Vector3 = Vector3.UP
+
+@export_storage var target_forward: Vector3 = Vector3.RIGHT
+
+#@export_storage var rotate: Vector3 = Vector3.ZERO
 
 # Farbmaske
-@export_storage var color_mask: float = 0.0
+@export_storage var color_number: float = 0.0

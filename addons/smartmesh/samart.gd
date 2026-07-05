@@ -3,6 +3,84 @@ extends Object
 class_name Smart
 
 static var BASE_PATH = "res://addons/smartmesh/mesh/"
+static var BASE_MATERIAL:Material = load("res://addons/smartmesh/vertex_material.material")
+
+# Farben Arrays [0-71]
+static var BASE_COLORS:PackedColorArray = [
+	Color8(255,255,255) #9
+	, Color8(245,245,245) #1,1
+	, Color8(228,228,228) #2,1
+	, Color8(206,206,206) #3,1
+	, Color8(177,177,177) #4,1
+	, Color8(142,142,142) #5,1
+	, Color8(102,102,102) #6,1
+	, Color8(62,62,62) #7,1
+	, Color8(31,31,31) #8,1
+	, Color8(0,0,0) #9,1
+	, Color8(255,0,0) #9,2	
+	, Color8(251,180,161) #1,2
+	, Color8(220,90,58) #2,2
+	, Color8(171,58,29) #3,2
+	, Color8(126,26,9) #4,2
+	, Color8(255,198,76) #1,3
+	, Color8(253,160,0) #2,3
+	, Color8(240,121,0) #3,3
+	, Color8(198,86,0) #4,3
+	, Color8(0,255,0) #9,3
+	, Color8(211,233,166) #5,2
+	, Color8(156,188,98) #6,2
+	, Color8(102,145,50) #7,2
+	, Color8(54,91,19) #8,2
+	, Color8(120,254,122) #5,3
+	, Color8(53,231,29) #6,3
+	, Color8(26,151,9) #7,3
+	, Color8(11,76,2) #8,3
+	, Color8(0,0,255) #9,4
+	, Color8(193,234,255) #1,6
+	, Color8(142,198,226) #2,6
+	, Color8(75,147,184) #3,6
+	, Color8(24,86,118) #4,6
+	, Color8(120,180,254) #1,7
+	, Color8(44,138,251) #2,7
+	, Color8(10,97,203) #3,7
+	, Color8(3,50,106) #4,7
+	, Color8(255,255,0) #9,5
+	, Color8(249,243,166) #5,6
+	, Color8(248,227,31) #6,6
+	, Color8(223,183,10) #7,6
+	, Color8(175,144,0) #8,6
+	, Color8(255,0,255) #9,6
+	, Color8(246,218,248) #1,4
+	, Color8(239,168,245) #2,4
+	, Color8(229,84,243) #3,4
+	, Color8(173,7,189) #4,4
+	, Color8(211,175,247) #1,5
+	, Color8(164,101,226) #2,5
+	, Color8(125,58,191) #3,5
+	, Color8(72,11,131) #4,5
+	, Color8(0,255,255) #9,7
+	, Color8(196,217,255) #1,8
+	, Color8(151,176,186) #2,8
+	, Color8(101,120,127) #3,8
+	, Color8(55,66,71) #4,8
+	, Color8(248,213,201) #5,7
+	, Color8(241,188,169) #6,7
+	, Color8(217,161,123) #7,7
+	, Color8(190,145,108) #8,7
+	, Color8(255,217,193) #5,8
+	, Color8(247,191,177) #6,8
+	, Color8(214,162,163) #7,8
+	, Color8(140,102,125) #8,8
+	, Color8(217,185,157) #5,4
+	, Color8(189,151,117) #6,4
+	, Color8(146,104,66) #7,4
+	, Color8(101,69,29) #8,4
+	, Color8(123,91,65) #5,5
+	, Color8(98,62,43) #6,5
+	, Color8(67,40,26) #7,5
+	, Color8(37,22,10) #8,5
+]
+
 
 # ================================
 #   Materials
@@ -148,10 +226,10 @@ static func get_resources_for_group(group_name: String) -> PackedStringArray:
 # -----------
 
 ## Liefert ein SmartObjekt mit angegebener Größe zurück
-static func calc_size(container_size:Vector3, color_mask:float = 0) -> SmartObject:
+static func calc_size(container_size:Vector3, color_number:float = 0) -> SmartObject:
 	var obj = SmartObject.new()
 	obj.size = container_size
-	obj.color_mask = color_mask
+	obj.color_number = color_number
 	return obj
 
 
@@ -361,11 +439,13 @@ static func split_3d_surface(container:SmartObject, holes: Array[SmartObject], a
 	for rect in current_rects:
 		var rect_center_2d = rect.position + (rect.size / 2.0)
 		var new_obj = SmartObject.new()
-		new_obj.color_mask = container.color_mask
-		new_obj.mesh_number = container.mesh_number
+		new_obj.color_number = container.color_number
+		new_obj.mesh_id = container.mesh_id
 		new_obj.pos = container.pos
 		new_obj.pos[axis_width] += rect_center_2d.x
 		new_obj.pos[axis_height] += rect_center_2d.y
+		new_obj.target_forward = container.target_forward
+		new_obj.target_up = container.target_up
 		#var block_center_3d = surface.pos
 		#block_center_3d[axis_width] += rect_center_2d.x
 		#block_center_3d[axis_height] += rect_center_2d.y
@@ -466,7 +546,7 @@ static func change_vertex_size(base_vertices: PackedVector3Array, source_size: V
 	
 	# Schleife optimiert für Godot: Direkte Modifikation im Array
 	for i in range(vertices.size()):
-		var v = vertices[i]
+		var v:Vector3 = vertices[i]
 		
 		# X-Achse starr verschieben, wenn außerhalb der Schutzzone
 		if abs(v.x) > safe_limit.x:
@@ -486,10 +566,10 @@ static func change_vertex_size(base_vertices: PackedVector3Array, source_size: V
 
 
 ## Erstellt ein Farb-Array 
-static func generate_color_array(vertex_count: int, color: Color) -> PackedColorArray:
+static func generate_color_array(vertex_count: int, color_number: int) -> PackedColorArray:
 	var colors := PackedColorArray()
 	colors.resize(vertex_count) # Speicher auf einmal reservieren
-	colors.fill(color)        # Alle Elemente nativ mit der Farbe füllen
+	colors.fill(BASE_COLORS[color_number])        # Alle Elemente nativ mit der Farbe füllen
 	return colors
 
 
@@ -504,7 +584,7 @@ static func get_smartmesh(id:String) -> SmartMesh:
 
 
 ## Mesh von SmartObject und SmartMesh erzeugen
-static func smart_to_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null, smart_mesh_list:Array[SmartMesh] = []) -> ArrayMesh:
+static func smart_to_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null, smart_mesh:SmartMesh = null) -> ArrayMesh:
 	# Mesh prüfen
 	if !mesh: mesh = ArrayMesh.new()
 
@@ -524,21 +604,59 @@ static func smart_to_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null
 			continue # nächste box
 
 		# Smart Mesh zum Hinzufügen laden
-		var box_mesh:SmartMesh = get_smartmesh(box.mesh_id)
+		var box_mesh:SmartMesh
+		if smart_mesh != null:
+			box_mesh = smart_mesh
+		else:
+			box_mesh = get_smartmesh(box.mesh_id)
 		if !box_mesh:
 			continue # nächste Box
 		
-		var pos_and_scale:Transform3D = Transform3D(Basis(), box.pos) # kann Später Skaliert und rotiert werden
-
-		var vertices:PackedVector3Array
-
+		# 1. Rotations-Basis berechnen
+		var rotation_basis: Basis = Basis.looking_at(box.target_forward, box.target_up, false)
+		
+		var vertices: PackedVector3Array
+		var normals: PackedVector3Array
+		
 		# Wenn Vertex Verschiebung
 		if box_mesh.is_vertex_scale:
+			# WICHTIG: Wir transformieren die box.size INVERS zur Rotation.
+			# Dadurch wird die Box-Größe so hingedreht, dass sie zum originalen, ungedrehten Mesh passt!
+			# abs() verhindert negative Werte durch die Rotation.
+			var local_target_size: Vector3 = (rotation_basis.inverse() * box.size).abs()
+
 			# Vertices Verschiebung
-			vertices = change_vertex_size(box_mesh.vertices, box_mesh.base_size, box.size, box_mesh.save_area)
+			vertices = change_vertex_size(box_mesh.vertices, box_mesh.base_size, local_target_size, box_mesh.save_area)
+
+			# Mesh richtig ausrichten
+			var transform: Transform3D = Transform3D(rotation_basis, box.pos)
+			vertices = transform * vertices
+			normals = Transform3D(rotation_basis, Vector3.ZERO) * box_mesh.normals
+			
 		else:
 			# Skalierung
-			vertices = change_vertex_scale(box_mesh.vertices, box_mesh.base_size, box.size, box_mesh.save_area)
+			var scale_x = box.size.x / box_mesh.base_size.x if box_mesh.base_size.x > 0 else 1.0
+			var scale_y = box.size.y / box_mesh.base_size.y if box_mesh.base_size.y > 0 else 1.0
+			var scale_z = box.size.z / box_mesh.base_size.z if box_mesh.base_size.z > 0 else 1.0
+			var scale_factor = Vector3(scale_x, scale_y, scale_z)
+			
+			# WICHTIG: immer um Vector3.ZERO skalieren, und nicht die box.pos nehmen sonnst wird die box.pos auch skaliert
+			var transform: Transform3D = Transform3D(rotation_basis, Vector3.ZERO)
+			transform = transform.scaled(scale_factor)
+			
+			# Position jetz nachträglich setzen
+			transform.origin = box.pos
+			
+			# Drehen Skalieren und Verschieben
+			vertices = transform * box_mesh.vertices
+			
+			# Positionieren
+			#for i in range(vertices.size()):
+			#	vertices[i] += box.pos
+			
+			# Normalen richtig stellen
+			var normal_basis: Basis = rotation_basis.inverse().transposed()
+			normals = Transform3D(normal_basis, Vector3.ZERO) * box_mesh.normals
 		
 		if vertices.size() <= 0:
 			continue
@@ -559,11 +677,11 @@ static func smart_to_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null
 			sm.indices = box_mesh.indices
 
 		# zum Smartmesh hinzufügen
-		sm.vertices += vertices * pos_and_scale
-		sm.normals += box_mesh.normals
+		sm.vertices += vertices # * pos_and_scale
+		sm.normals += normals # gedrehte normals
 		
 		## Farben
-		colors += generate_color_array(vertices.size(), get_mask_color(box.color_mask))
+		colors += generate_color_array(vertices.size(), box.color_number)
 		
 		
 	## Teil 2: Soll um 5 Einheiten nach rechts verschoben werden
@@ -576,6 +694,7 @@ static func smart_to_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null
 
 		
 	# ArrayMesh befüllen
+# ArrayMesh befüllen
 	var mesh_arrays = []
 	mesh_arrays.resize(Mesh.ARRAY_MAX)
 	mesh_arrays[Mesh.ARRAY_VERTEX] = sm.vertices
@@ -583,18 +702,23 @@ static func smart_to_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null
 	mesh_arrays[Mesh.ARRAY_INDEX] = sm.indices
 	mesh_arrays[Mesh.ARRAY_COLOR] = colors
 	
-	# SurfaceTool für die Normalen
-	if mesh_arrays and mesh_arrays[Mesh.ARRAY_VERTEX].size() > 0:
-		var st:SurfaceTool = SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		st.create_from_arrays(mesh_arrays)
-		#st.generate_normals() # todo: Einstellbar?
-		#st.generate_tangents() # Geht nur mit UV's
-		
-		mesh.clear_surfaces()
-		st.commit(mesh)
+	# Vorhandene Oberflächen löschen
+	mesh.clear_surfaces()
+	
+	# Direkte Übergabe an das ArrayMesh (Blendschnell, da nativ in C++)
+	if sm.vertices.size() > 0:
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, mesh_arrays)
 
+	# Material setzen
+	if BASE_MATERIAL == null:
+		BASE_MATERIAL = load("res://addons/smartmesh/vertex_material.material") 
+	
+	if mesh.get_surface_count() > 0:
+		mesh.surface_set_material(0, BASE_MATERIAL)
+	
+	# Geändertes Mesh zurückgeben
 	return mesh
+
 
 
 # Variablen zum Mesch Zusammenbauen
@@ -753,8 +877,6 @@ static func _get_single_m(meshinst: MultiMeshInstance3D):
 		var isMaterial:bool = false
 		for j in range(material_list.size()):
 			var test_mat = material_list[j]
-			print("material_list: ", material_list)
-			print("surface_list: ", surface_list)
 			if test_mat == mat:
 				st = surface_list[j]
 				isMaterial = true

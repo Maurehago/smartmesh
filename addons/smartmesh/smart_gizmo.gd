@@ -21,6 +21,11 @@ func _get_gizmo_name() -> String:
 func _has_gizmo(node: Node) -> bool:
 	return node is Smart3D
 
+# Hilfsfunktion, um zu prüfen, ob die Node ausgewählt ist
+func _is_node_selected(node: Node3D) -> bool:
+	var selection = EditorInterface.get_selection().get_selected_nodes()
+	return node in selection
+
 func _get_handle_name(gizmo: EditorNode3DGizmo, handle_id: int, secondary: bool) -> String:
 	match handle_id:
 		HANDLE_POS_X: return "Breite + (X)"
@@ -44,6 +49,8 @@ func _redraw(gizmo: EditorNode3DGizmo) -> void:
 	gizmo.clear()
 	var node = gizmo.get_node_3d() as Smart3D
 	if not node: return
+	if not _is_node_selected(node):
+		return
 
 	# Wenn wir ziehen, nutzen wir die temporäre Größe und das temporäre Offset
 	var mx = node._temp_size.x if node._temp_size.x >= 0 else node.size_x

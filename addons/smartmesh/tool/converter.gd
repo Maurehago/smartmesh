@@ -11,8 +11,10 @@ var import_button = convert_mesh
 @export var smart_mesh:SmartMesh
 
 @export_group("Test")
-@export var smart_size:SmartSize:
-	set(v):smart_size = _set_gen_func(smart_size, v, test_mesh)
+@export_range(0.0, 71.0, 1.0) var color_number:float = 0:
+	set(v): color_number = v;_generate()
+@export var target_up: Vector3 = Vector3.UP
+@export var target_forward: Vector3 = Vector3.FORWARD
 
 var is_converting:bool = false
 
@@ -29,24 +31,31 @@ func convert_mesh():
 	smart_mesh = Smart.mesh_to_smartmesh(base_mesh)
 	
 	# Test Größe setzen
-	if  !smart_size: smart_size = SmartSize.new()
-	smart_size.size_x = smart_mesh.base_size.x
-	smart_size.size_y = smart_mesh.base_size.y
-	smart_size.size_z = smart_mesh.base_size.z
+	#if  !smart_size: smart_size = SmartSize.new()
+	#smart_size.size_x = smart_mesh.base_size.x
+	#smart_size.size_y = smart_mesh.base_size.y
+	#smart_size.size_z = smart_mesh.base_size.z
 
 	# Konvertierung ende
 	is_converting = false
 
 	# Mesh Testen und anzeigen
-	test_mesh()
+	_generate()
 
 ## Testet ob die SmartMesh größenänderung richtig funktioniert
-func test_mesh():
-	if is_converting or !mesh or !smart_mesh: return
-
+func _generate():
+	if is_converting or !smart_mesh: return
+	if !self.mesh:
+		self.mesh = ArrayMesh.new()
+	
+	# Box erstellen
+	var box = Smart.calc_size(Vector3(self.size_x, self.size_y, self.size_z), color_number)
+	box.target_forward = target_forward
+	box.target_up = target_up
+	
 	# Smart Objekte erstellen
-	var box_list:Array[SmartObject] = smart_size.generate() 
-	print("SmartObj:", box_list)
+	#var box_list:Array[SmartObject] = smart_size.generate() 
+	#print("SmartObj:", box_list)
 	
 	# Mesh erstellen
-	Smart.smart_to_mesh(box_list, self.mesh, [smart_mesh])
+	Smart.smart_to_mesh([box], self.mesh, smart_mesh)

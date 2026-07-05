@@ -24,6 +24,7 @@ class_name Smart3D
 var _smart_properties: Dictionary = {}
 
 # Konfiguration: Was möchte der Kind-Generator nutzen?
+var _requested_colors: Dictionary = {} # {"variable_name": farb_index} 
 var _requested_dropdowns: Dictionary = {} # {"variable_name": "ordner_name"}
 var _requested_arrays: Dictionary = {}    # {"variable_name": "ordner_name"}
 
@@ -131,6 +132,12 @@ func _rasten_auf_3d_raster() -> void:
 # -----------------------------------------------------------------------------
 # REGISTRIERUNGS-FUNKTIONEN Für SmartMesh Auswahl
 # -----------------------------------------------------------------------------
+## Farbauswahl registrieren
+func register_color(property_name:String, default_value:float = 0.0):
+	_requested_colors[property_name] = property_name
+	if not _smart_properties.has(property_name):
+		_smart_properties[property_name] = default_value
+
 func register_dropdown(property_name: String, group_folders: Variant, default_value: String = "") -> void:
 	# Wenn es ein einzelner String ist, packen wir ihn in ein Array
 	if typeof(group_folders) == TYPE_STRING:
@@ -156,7 +163,10 @@ func register_array(property_name: String, group_folders: Variant) -> void:
 # Jedes Mal, wenn der User im Inspektor etwas ändert, fängt die Basisklasse das ab
 func _set(property: StringName, value: Variant) -> bool:
 	if _smart_properties.has(property):
-		_smart_properties[property] = value
+		if property in _requested_colors:
+			_smart_properties[property] = int(value)
+		else:
+			_smart_properties[property] = value
 		_generate() # Mesh neu generieren
 		return true
 	return false
@@ -177,10 +187,22 @@ func get_smart_val(property_name: String) -> Variant:
 # -----------------------------------------------------------------------------
 func _get_property_list() -> Array[Dictionary]:
 	var properties: Array[Dictionary] = []
+
+	# Farbauswahl hinzufügen
+	if not _requested_colors.is_empty():
+		properties.append({"name": "Colors", "type": TYPE_NIL, "usage": PROPERTY_USAGE_GROUP})
+		for prop_name in _requested_colors:
+			properties.append({
+				"name": prop_name,
+				"type": TYPE_FLOAT,
+				"hint": PROPERTY_HINT_RANGE,
+				"hint_string": "0.0, 71.0, 1.0", 
+				"usage": PROPERTY_USAGE_DEFAULT # Macht es im Inspektor sichtbar & speichert es in der Szene
+			})
 	
 	# 1. Registrierte Dropdowns hinzufügen
 	if not _requested_dropdowns.is_empty():
-		properties.append({"name": "Komponenten (Auswahl)", "type": TYPE_NIL, "usage": PROPERTY_USAGE_CATEGORY})
+		properties.append({"name": "SmartMesh (Select)", "type": TYPE_NIL, "usage": PROPERTY_USAGE_GROUP})
 		for prop_name in _requested_dropdowns:
 			var folders = _requested_dropdowns[prop_name] # Das ist jetzt immer ein Array!
 			var combined_items := PackedStringArray()
@@ -200,7 +222,7 @@ func _get_property_list() -> Array[Dictionary]:
 			
 	# 2. Registrierte Arrays hinzufügen
 	if not _requested_arrays.is_empty():
-		properties.append({"name": "Komponenten (Pools)", "type": TYPE_NIL, "usage": PROPERTY_USAGE_CATEGORY})
+		properties.append({"name": "SmartMesh (Pools)", "type": TYPE_NIL, "usage": PROPERTY_USAGE_GROUP})
 		for prop_name in _requested_arrays:
 			var folders = _requested_arrays[prop_name] # Das ist jetzt immer ein Array!
 			var combined_items := PackedStringArray()
