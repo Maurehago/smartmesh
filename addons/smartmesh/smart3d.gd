@@ -14,9 +14,9 @@ class_name Smart3D
 
 # Snapping
 @export_group("Snap")
-@export_enum("1.0", "0.1", "0.01") var snapp_x: String = "0.1"
-@export_enum("1.0", "0.1", "0.01") var snapp_y: String = "0.1"
-@export_enum("1.0", "0.1", "0.01") var snapp_z: String = "0.1"
+@export_enum("1.0", "0.1", "0.01", "0.001") var snapp_x: String = "0.1"
+@export_enum("1.0", "0.1", "0.01", "0.001") var snapp_y: String = "0.1"
+@export_enum("1.0", "0.1", "0.01", "0.001") var snapp_z: String = "0.1"
 @export var snap_position:bool = true
 @export var snap_rotation:bool = true
 
@@ -196,7 +196,7 @@ func _get_property_list() -> Array[Dictionary]:
 				"name": prop_name,
 				"type": TYPE_FLOAT,
 				"hint": PROPERTY_HINT_RANGE,
-				"hint_string": "0.0, 71.0, 1.0", 
+				"hint_string": "0.0, 79.0, 1.0", 
 				"usage": PROPERTY_USAGE_DEFAULT # Macht es im Inspektor sichtbar & speichert es in der Szene
 			})
 	

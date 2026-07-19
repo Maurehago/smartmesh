@@ -5,88 +5,25 @@ class_name Smart
 static var BASE_PATH = "res://addons/smartmesh/mesh/"
 static var BASE_MATERIAL:Material = load("res://addons/smartmesh/vertex_material.material")
 
-# Farben Arrays [0-71]
-static var BASE_COLORS:PackedColorArray = [
-	Color8(255,255,255) #9
-	, Color8(245,245,245) #1,1
-	, Color8(228,228,228) #2,1
-	, Color8(206,206,206) #3,1
-	, Color8(177,177,177) #4,1
-	, Color8(142,142,142) #5,1
-	, Color8(102,102,102) #6,1
-	, Color8(62,62,62) #7,1
-	, Color8(31,31,31) #8,1
-	, Color8(0,0,0) #9,1
-	, Color8(255,0,0) #9,2	
-	, Color8(251,180,161) #1,2
-	, Color8(220,90,58) #2,2
-	, Color8(171,58,29) #3,2
-	, Color8(126,26,9) #4,2
-	, Color8(255,198,76) #1,3
-	, Color8(253,160,0) #2,3
-	, Color8(240,121,0) #3,3
-	, Color8(198,86,0) #4,3
-	, Color8(0,255,0) #9,3
-	, Color8(211,233,166) #5,2
-	, Color8(156,188,98) #6,2
-	, Color8(102,145,50) #7,2
-	, Color8(54,91,19) #8,2
-	, Color8(120,254,122) #5,3
-	, Color8(53,231,29) #6,3
-	, Color8(26,151,9) #7,3
-	, Color8(11,76,2) #8,3
-	, Color8(0,0,255) #9,4
-	, Color8(193,234,255) #1,6
-	, Color8(142,198,226) #2,6
-	, Color8(75,147,184) #3,6
-	, Color8(24,86,118) #4,6
-	, Color8(120,180,254) #1,7
-	, Color8(44,138,251) #2,7
-	, Color8(10,97,203) #3,7
-	, Color8(3,50,106) #4,7
-	, Color8(255,255,0) #9,5
-	, Color8(249,243,166) #5,6
-	, Color8(248,227,31) #6,6
-	, Color8(223,183,10) #7,6
-	, Color8(175,144,0) #8,6
-	, Color8(255,0,255) #9,6
-	, Color8(246,218,248) #1,4
-	, Color8(239,168,245) #2,4
-	, Color8(229,84,243) #3,4
-	, Color8(173,7,189) #4,4
-	, Color8(211,175,247) #1,5
-	, Color8(164,101,226) #2,5
-	, Color8(125,58,191) #3,5
-	, Color8(72,11,131) #4,5
-	, Color8(0,255,255) #9,7
-	, Color8(196,217,255) #1,8
-	, Color8(151,176,186) #2,8
-	, Color8(101,120,127) #3,8
-	, Color8(55,66,71) #4,8
-	, Color8(248,213,201) #5,7
-	, Color8(241,188,169) #6,7
-	, Color8(217,161,123) #7,7
-	, Color8(190,145,108) #8,7
-	, Color8(255,217,193) #5,8
-	, Color8(247,191,177) #6,8
-	, Color8(214,162,163) #7,8
-	, Color8(140,102,125) #8,8
-	, Color8(217,185,157) #5,4
-	, Color8(189,151,117) #6,4
-	, Color8(146,104,66) #7,4
-	, Color8(101,69,29) #8,4
-	, Color8(123,91,65) #5,5
-	, Color8(98,62,43) #6,5
-	, Color8(67,40,26) #7,5
-	, Color8(37,22,10) #8,5
-]
+# ================================
+#   Farben
+# ------------
+
+## Gibt die Farbe für die angegeben Farbnummer zurück
+static func get_color_by_id(farbnummer: int) -> Color:
+	return SmartColor.get_color_by_id(farbnummer)
+
+
+## Liefert den Index einer Farbe nach Gruppe und Farbwert zurück
+static func get_color_index(color_group:int, color_number:int) -> int:
+	return (color_number * 8) + color_group
 
 
 # ================================
 #   Materials
 # ------------
 
-static var boxMesh:BoxMesh
+#static var boxMesh:BoxMesh
 
 ## Liefert eine der Grundfarben "schwarz", "rot", "grün", "blau", "gelb", "lila", "türkies", "weiß" zurück.
 ## Diese werden für einen Shader sum Maskieren des Materials genutzt.
@@ -116,8 +53,8 @@ static func get_mask_color(color_mask: int) -> Color:
 # -----------
 
 ## Erstellt aus einem Mesh ein SmartMesh
-## Die Vertex Farben bestimmen die Vertex Gruppen (Basis Farben, wie bei get Mask Color) max 8 Gruppen möglich
-static func mesh_to_smartmesh(source_mesh:Mesh) -> SmartMesh:
+## Die Vertex Farben bestimmen die Vertex Gruppen max 8 Gruppen möglich
+static func get_smartmesh_from_mesh(source_mesh:Mesh) -> SmartMesh:
 	# Lesen der Mesh-Arrays vom Surface 0
 	var mesh_arrays = source_mesh.surface_get_arrays(0)
 	var raw_vertices: PackedVector3Array = mesh_arrays[Mesh.ARRAY_VERTEX]
@@ -136,28 +73,28 @@ static func mesh_to_smartmesh(source_mesh:Mesh) -> SmartMesh:
 	if !raw_colors.is_empty():
 		for i in range(raw_vertices.size()):
 			if raw_colors[i].r == 0.0 and raw_colors[i].g == 0.0 and raw_colors[i].b == 0.0:
-				var gruppe = target_mesh.get_group("0")
+				var gruppe = target_mesh.get_group("O")
 				gruppe.append(i)
 			elif raw_colors[i].r > 0.0 and raw_colors[i].g == 0.0 and raw_colors[i].b == 0.0:
-				var gruppe = target_mesh.get_group("1")
+				var gruppe = target_mesh.get_group("R")
 				gruppe.append(i)
 			elif raw_colors[i].r == 0.0 and raw_colors[i].g > 0.0 and raw_colors[i].b == 0.0:
-				var gruppe = target_mesh.get_group("2")
+				var gruppe = target_mesh.get_group("G")
 				gruppe.append(i)
 			elif raw_colors[i].r == 0.0 and raw_colors[i].g == 0.0 and raw_colors[i].b > 0.0:
-				var gruppe = target_mesh.get_group("3")
+				var gruppe = target_mesh.get_group("B")
 				gruppe.append(i)
 			elif raw_colors[i].r > 0.0 and raw_colors[i].g > 0.0 and raw_colors[i].b == 0.0:
-				var gruppe = target_mesh.get_group("4")
+				var gruppe = target_mesh.get_group("RG")
 				gruppe.append(i)
 			elif raw_colors[i].r > 0.0 and raw_colors[i].g == 0.0 and raw_colors[i].b > 0.0:
-				var gruppe = target_mesh.get_group("5")
+				var gruppe = target_mesh.get_group("RB")
 				gruppe.append(i)
 			elif raw_colors[i].r == 0.0 and raw_colors[i].g > 0.0 and raw_colors[i].b > 0.0:
-				var gruppe = target_mesh.hole_gruppe("6")
+				var gruppe = target_mesh.hole_gruppe("GB")
 				gruppe.append(i)
 			elif raw_colors[i].r > 0.0 and raw_colors[i].g > 0.0 and raw_colors[i].b > 0.0:
-				var gruppe = target_mesh.get_group("7")
+				var gruppe = target_mesh.get_group("W")
 				gruppe.append(i)
 
 	# SmartMesh zurückgeben
@@ -225,16 +162,26 @@ static func get_resources_for_group(group_name: String) -> PackedStringArray:
 #   Objects
 # -----------
 
-## Liefert ein SmartObjekt mit angegebener Größe zurück
-static func calc_size(container_size:Vector3, color_number:float = 0) -> SmartObject:
+## Liefert ein SmartObjekt zurück
+## und liest die Größe vom Smart3D
+static func get_object_from_size(size:Vector3, color_number:float = 0) -> SmartObject:
 	var obj = SmartObject.new()
-	obj.size = container_size
+	obj.size = size
+	obj.color_number = color_number
+	return obj
+
+
+## Liefert ein SmartObjekt zurück
+## und liest die Größe vom Smart3D
+static func get_object_from_smart3d(container:Smart3D, color_number:float = 0) -> SmartObject:
+	var obj = SmartObject.new()
+	obj.size = Vector3(container.size_x, container.size_y, container.size_z)
 	obj.color_number = color_number
 	return obj
 
 
 ## Fügt die Elemente aus 'list_to_append' an 'base_list' an. 'base_list' wird dabei direkt modifiziert.
-static func append_smartObjects(base_list: Array[SmartObject], list_to_append: Array[SmartObject], offset:Vector3 = Vector3.ZERO, mesh_id:int = 0) -> void:
+static func append_objects(base_list: Array[SmartObject], list_to_append: Array[SmartObject], offset:Vector3 = Vector3.ZERO, mesh_id:int = 0) -> void:
 	# Durchfahre alle Elemente der Vorlagen-Liste
 	for element in list_to_append:
 		if not element: 
@@ -256,12 +203,12 @@ static func append_smartObjects(base_list: Array[SmartObject], list_to_append: A
 ## direction: z.B. Vector3.RIGHT (X+), Vector3(1, 1, 0) (Ecke oben rechts)
 ## mode: 1 für Außen, -1 für Innen, 0 für Mitte
 ## margin: Optionaler Zusatzabstand in Einheiten
-static func calc_offset(container_size: Vector3, object_size: Vector3, direction: Vector3, mode: int, margin: float = 0.0) -> SmartObject:
+static func get_object_position(container_size: Vector3, object_size: Vector3, direction: Vector3, mode: int = -1, margin: Vector3 = Vector3.ZERO) -> SmartObject:
 	var offset = Vector3.ZERO
 	var obj = SmartObject.new()
 	obj.size = object_size
 	
-	# Wir loopen über x, y und z
+	# Achsen x, y und z überprüfen
 	for axis in [Vector3.RIGHT, Vector3.UP, Vector3.FORWARD]:
 		# Prüfen, ob die Achse in der Richtung enthalten ist (1 oder -1)
 		var d = direction.dot(axis)
@@ -269,18 +216,29 @@ static func calc_offset(container_size: Vector3, object_size: Vector3, direction
 		if abs(d) > 0.01: # Falls diese Achse Teil der Ausrichtung ist
 			var radius_a = container_size.dot(axis) / 2.0
 			var radius_b = object_size.dot(axis) / 2.0
+			var ma = margin.dot(axis) # Abstand ich Achsen Richung
 			
 			# Formel: (Radius_A + (Modus * Radius_B) + Abstand) * Richtungssign
-			var dist = (radius_a + (mode * radius_b) + margin) * sign(d)
+			var dist = (radius_a + (mode * radius_b) + ma) * sign(d)
 			offset += axis * dist
 	
 	obj.pos = offset
 	return obj
 
+
+## directions: Liste mit Richungen z.B. Vector3.RIGHT (X+), Vector3(1, 1, 0) (Ecke oben rechts)
+## mode: 1 für Außen, -1 für Innen, 0 für Mitte
+## margin: Optionaler Zusatzabstand in Einheiten
+static func get_objectarray_positions(container_size: Vector3, object_size: Vector3, directions: PackedVector3Array, mode: int = -1, margin: Vector3 = Vector3.ZERO) -> Array[SmartObject]:
+	var list:Array[SmartObject] = []
+	for i in range(directions.size()):
+		list.append(get_object_position(container_size, object_size, directions[i], mode, margin))
+	return list
+
 ## direction: Achse der Verteilung (z.B. Vector3.RIGHT)
 ## count: Anzahl der Elemente
 ## touch_edges: true = bündig an Innenkante (Leiter), false = mit Abstand zum Rand (Zaun)
-static func calc_linear_array(container_size: Vector3, object_size: Vector3, direction: Vector3, count: int, touch_edges: bool = true) -> Array[SmartObject]:
+static func get_objectarray_in_area(container_size: Vector3, object_size: Vector3, direction: Vector3, count: int, touch_edges: bool = true) -> Array[SmartObject]:
 	var list: Array[SmartObject] = []
 	if count <= 0: return list
 	
@@ -320,8 +278,8 @@ static func calc_linear_array(container_size: Vector3, object_size: Vector3, dir
 	return list
 
 
-## Linar Array mi´t Random Versatz
-static func calc_random_size_pos(count:int, linear_pos:Vector3, random_pos:Vector3, random_scale:Vector3, random_rotation:Vector3) -> Array[SmartObject]:
+## Linar Array mit Random Versatz
+static func get_objectarray(count:int, linear_pos:Vector3, random_pos:Vector3 = Vector3.ZERO, random_scale:Vector3 = Vector3.ZERO, random_rotation:Vector3 = Vector3.ZERO) -> Array[SmartObject]:
 	var list: Array[SmartObject] = []
 	# Position
 	var pos:Vector3 = Vector3.ZERO
@@ -359,20 +317,21 @@ static func calc_random_size_pos(count:int, linear_pos:Vector3, random_pos:Vecto
 		
 	return list
 
+# todo: Ausrichtung?
 ## Rahmen erstellen
 ## mode: 1 für Außen, -1 für Innen, 0 für Mitte
-static func calc_border(container_size: Vector3, border_size: Vector2, mode:int = -1) -> Array[SmartObject]:
+static func get_objectarray_border(container_size: Vector3, border_size: Vector2, mode:int = -1) -> Array[SmartObject]:
 	var list: Array[SmartObject] = []
 	var width = border_size.x
 	var deph = border_size.y
 	
 	var size_h = Vector3(container_size.x - (2*width), width, deph)
-	list.append(Smart.calc_offset(container_size, size_h, Vector3.UP, mode))
-	list.append(Smart.calc_offset(container_size, size_h, Vector3.DOWN, mode))
+	list.append(Smart.get_object_position(container_size, size_h, Vector3.UP, mode))
+	list.append(Smart.get_object_position(container_size, size_h, Vector3.DOWN, mode))
 	
 	var size_v = Vector3(width, container_size.y, deph)
-	list.append(Smart.calc_offset(container_size, size_v, Vector3.LEFT, mode))
-	list.append(Smart.calc_offset(container_size, size_v, Vector3.RIGHT, mode))
+	list.append(Smart.get_object_position(container_size, size_v, Vector3.LEFT, mode))
+	list.append(Smart.get_object_position(container_size, size_v, Vector3.RIGHT, mode))
 	
 	return list
 
@@ -406,6 +365,11 @@ static func calc_rect_with_hole(wall: Rect2, hole: Rect2) -> Array[Rect2]:
 		sub_rects.append(Rect2(clipped_hole.position.x, clipped_hole.end.y, clipped_hole.size.x, height))
 		
 	return sub_rects
+
+
+# ===============================
+#   Mesh
+# ---------
 
 # Der Kern-Algorithmus angepasst an deine Ressourcen
 #static func _split_3d_surface(surface_pos: Vector3, surface_size: Vector3, hole_resources: Array[RoomElementResource]) -> Array[AABB]:
@@ -569,10 +533,10 @@ static func change_vertex_size(base_vertices: PackedVector3Array, source_size: V
 static func generate_color_array(vertex_count: int, color_number: int) -> PackedColorArray:
 	var colors := PackedColorArray()
 	colors.resize(vertex_count) # Speicher auf einmal reservieren
-	colors.fill(BASE_COLORS[color_number])        # Alle Elemente nativ mit der Farbe füllen
+	colors.fill(get_color_by_id(color_number)) # Alle Elemente nativ mit der Farbe füllen
 	return colors
 
-
+## Läd ein Basis SmartMesh
 static func get_smartmesh(id:String) -> SmartMesh:
 	# Pfad zusammenbauen
 	var res_pfad = BASE_PATH + id + ".tres"
@@ -584,7 +548,7 @@ static func get_smartmesh(id:String) -> SmartMesh:
 
 
 ## Mesh von SmartObject und SmartMesh erzeugen
-static func smart_to_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null, smart_mesh:SmartMesh = null) -> ArrayMesh:
+static func get_mesh_from_objectarray(smartboxes: Array[SmartObject], mesh: ArrayMesh = null, smart_mesh:SmartMesh = null) -> ArrayMesh:
 	# Mesh prüfen
 	if !mesh: mesh = ArrayMesh.new()
 
@@ -694,7 +658,6 @@ static func smart_to_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null
 
 		
 	# ArrayMesh befüllen
-# ArrayMesh befüllen
 	var mesh_arrays = []
 	mesh_arrays.resize(Mesh.ARRAY_MAX)
 	mesh_arrays[Mesh.ARRAY_VERTEX] = sm.vertices
@@ -719,6 +682,32 @@ static func smart_to_mesh(smartboxes: Array[SmartObject], mesh: ArrayMesh = null
 	# Geändertes Mesh zurückgeben
 	return mesh
 
+
+# =======================
+#   Nodes
+# ---------
+
+## Holt oder erstellt eine KindNode (Smart3D)
+## Übergib den Pfad zum Skript oder ein geladenes Skript-Objekt
+static func get_or_create(node:Node3D, part_name: String, script_or_class: Variant) -> Node3D:
+	var existing_node = node.get_node_or_null(part_name)
+	if existing_node:
+		return existing_node
+
+	# Falls ein Pfad (String) übergeben wurde, lade das Skript
+	var resource = script_or_class
+	if script_or_class is String:
+		resource = load(script_or_class)
+
+	# Erstellt die Node und instanziiert das Skript darauf
+	var new_node = resource.new() 
+	new_node.name = part_name
+	node.add_child(new_node)
+	
+	if Engine.is_editor_hint():
+		new_node.owner = node.get_tree().edited_scene_root
+		
+	return new_node
 
 
 # Variablen zum Mesch Zusammenbauen

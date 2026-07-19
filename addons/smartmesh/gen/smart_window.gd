@@ -10,5 +10,5 @@ class_name SmartWindow
 func generate() -> Array[SmartObject]:
 	object_list = []
 	
-	object_list = Smart.calc_border(self.size, Vector2(width, deph))
+	object_list = Smart.get_objectarray_border(self.size, Vector2(width, deph))
 	return object_list

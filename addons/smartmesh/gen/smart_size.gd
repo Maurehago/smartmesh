@@ -14,5 +14,5 @@ class_name SmartSize
 	set(v):color = v; emit_changed()
 
 func generate() -> Array[SmartObject]:
-	var box = Smart.calc_size(Vector3(size_x, size_y, size_z), color)
+	var box = Smart.get_object_from_size(Vector3(size_x, size_y, size_z), color)
 	return [box]

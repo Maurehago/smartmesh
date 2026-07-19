@@ -28,7 +28,7 @@ func convert_mesh():
 	is_converting = true
 	
 	# SmartMesh erstellen
-	smart_mesh = Smart.mesh_to_smartmesh(base_mesh)
+	smart_mesh = Smart.get_smartmesh_from_mesh(base_mesh)
 	
 	# Test Größe setzen
 	#if  !smart_size: smart_size = SmartSize.new()
@@ -49,7 +49,7 @@ func _generate():
 		self.mesh = ArrayMesh.new()
 	
 	# Box erstellen
-	var box = Smart.calc_size(Vector3(self.size_x, self.size_y, self.size_z), color_number)
+	var box = Smart.get_object_from_smart3d(self, color_number)
 	box.target_forward = target_forward
 	box.target_up = target_up
 	
@@ -58,4 +58,4 @@ func _generate():
 	#print("SmartObj:", box_list)
 	
 	# Mesh erstellen
-	Smart.smart_to_mesh([box], self.mesh, smart_mesh)
+	Smart.get_mesh_from_objectarray([box], self.mesh, smart_mesh)

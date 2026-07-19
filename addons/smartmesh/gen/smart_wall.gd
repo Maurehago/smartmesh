@@ -42,12 +42,12 @@ class_name SmartWall
 
 func generate() -> Array[SmartObject]:
 	var list:Array[SmartObject] = []
-	var wall = Smart.calc_size(Vector3(wall_width, wall_height, wall_deph), color_mask)
-	wall.mesh_number = wall_mesh_number
+	#var wall = Smart.calc_size(Vector3(wall_width, wall_height, wall_deph), color_mask)
+	#wall.mesh_number = wall_mesh_number
 	
 	# Wenn keine Fenster
-	if window_pos.size() <= 0 and door_pos.size() <= 0:
-		return [wall]
+	#if window_pos.size() <= 0 and door_pos.size() <= 0:
+	#	return [wall]
 	
 	# Fenster Größe merken und Fenster Teile berechnen
 	window.size = Vector3(window_width, window_height, wall_deph)
@@ -62,22 +62,22 @@ func generate() -> Array[SmartObject]:
 		# Fenster Ausschnitt erstellen
 		var obj = SmartObject.new()
 		obj.size = window.size
-		obj.pos = Vector3(p, height, wall.pos.z)
+		#obj.pos = Vector3(p, height, wall.pos.z)
 		
 		# Fenster Ausschnitt Liste hinzufügen
 		window_list.append(obj)
 		
 		# Fenster Teile hinzufügen
-		Smart.append_smartObjects(list, window_parts, obj.pos, window_mesh_number)
+		Smart.append_objects(list, window_parts, obj.pos, window_mesh_number)
 		pass
 	
 	# Door
-	for p in door_pos:
-		var door = Smart.calc_size(Vector3(door_width, door_height, wall_deph), color_mask)
-		door.pos.x = p
-		door.pos.y = (-(wall_height/2) + (door_height/2)) -0.01
-		window_list.append(door)
+	#for p in door_pos:
+		#var door = Smart.calc_size(Vector3(door_width, door_height, wall_deph), color_mask)
+		#door.pos.x = p
+		#door.pos.y = (-(wall_height/2) + (door_height/2)) -0.01
+		#window_list.append(door)
 	
 	# Wand in Rechteck aufsplitten
-	list.append_array(Smart.split_3d_surface(wall, window_list))
+	#list.append_array(Smart.split_3d_surface(wall, window_list))
 	return list
