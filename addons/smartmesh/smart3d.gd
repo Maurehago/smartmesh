@@ -128,15 +128,35 @@ func _rasten_auf_3d_raster() -> void:
 			set_deferred("global_rotation_degrees", neue_rot)
 
 
+# =====================================
+#   hilfsfunktion für Modifikatoren
+# ----------------------------------
+## Verwaltet rein die Signal-Verbindungen und gibt das neue Array zurück
+func update_modifier_signals(old_mods: Array[SmartModifier], new_mods: Array[SmartModifier]) -> Array[SmartModifier]:
+	for m in old_mods:
+		if m and m.changed.is_connected(_on_modifier_changed):
+			m.changed.disconnect(_on_modifier_changed)
+			
+	for m in new_mods:
+		if m and not m.changed.is_connected(_on_modifier_changed):
+			m.changed.connect(_on_modifier_changed)
+			
+	return new_mods
+	
+## Callback für Signal-Änderungen IM Modifier
+func _on_modifier_changed() -> void:
+	_generate()
+
 
 # -----------------------------------------------------------------------------
 # REGISTRIERUNGS-FUNKTIONEN Für SmartMesh Auswahl
 # -----------------------------------------------------------------------------
 ## Farbauswahl registrieren
-func register_color(property_name:String, default_value:float = 0.0):
+func register_color(property_name:String, default_color:float = 0.0):
 	_requested_colors[property_name] = property_name
+	
 	if not _smart_properties.has(property_name):
-		_smart_properties[property_name] = default_value
+		_smart_properties[property_name] = default_color
 
 func register_dropdown(property_name: String, group_folders: Variant, default_value: String = "") -> void:
 	# Wenn es ein einzelner String ist, packen wir ihn in ein Array

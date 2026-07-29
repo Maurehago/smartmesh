@@ -1,5 +1,8 @@
-extends SmartObject
+@tool
+extends Smart3D
 class_name SmartGen
+
+@export_storage var modifiers: Array[SmartModifier] = []
 
 var object_list:Array[SmartObject] = []
 
@@ -24,7 +27,8 @@ func _set_gen_func(old_gen:SmartGen, new_gen:SmartGen, fu:Callable):
 	#return true
 
 # Mesh generieren Funktion - überschreiben
-func generate() -> Array[SmartObject]:
+func _generate():
+	super()
 	object_list = []
 	
 	return object_list

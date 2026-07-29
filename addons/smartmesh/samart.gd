@@ -16,7 +16,7 @@ static func get_color_by_id(farbnummer: int) -> Color:
 
 ## Liefert den Index einer Farbe nach Gruppe und Farbwert zurück
 static func get_color_index(color_group:int, color_number:int) -> int:
-	return (color_number * 8) + color_group
+	return (color_group * 10) + color_number
 
 
 # ================================
@@ -91,7 +91,7 @@ static func get_smartmesh_from_mesh(source_mesh:Mesh) -> SmartMesh:
 				var gruppe = target_mesh.get_group("RB")
 				gruppe.append(i)
 			elif raw_colors[i].r == 0.0 and raw_colors[i].g > 0.0 and raw_colors[i].b > 0.0:
-				var gruppe = target_mesh.hole_gruppe("GB")
+				var gruppe = target_mesh.get_group("GB")
 				gruppe.append(i)
 			elif raw_colors[i].r > 0.0 and raw_colors[i].g > 0.0 and raw_colors[i].b > 0.0:
 				var gruppe = target_mesh.get_group("W")
@@ -498,9 +498,9 @@ static func change_vertex_scale(vertices: PackedVector3Array, source_size: Vecto
 
 
 ## Vertex Array Punkte verschieben
-static func change_vertex_size(base_vertices: PackedVector3Array, source_size: Vector3, target_size: Vector3, save_area: Vector3) -> PackedVector3Array:
-	if base_vertices.is_empty(): return base_vertices
-	var vertices:PackedVector3Array = base_vertices.duplicate()
+static func change_vertex_size(vertices: PackedVector3Array, source_size: Vector3, target_size: Vector3, save_area: Vector3) -> PackedVector3Array:
+	if vertices.is_empty(): return vertices
+	#var vertices:PackedVector3Array = base_vertices.duplicate()
 	
 	# Grenze der Schutzzone (Radius vom Nullpunkt)
 	var safe_limit = save_area / 2.0
@@ -546,12 +546,7 @@ static func get_smartmesh(id:String) -> SmartMesh:
 	
 	return null
 
-
-## Mesh von SmartObject und SmartMesh erzeugen
-static func get_mesh_from_objectarray(smartboxes: Array[SmartObject], mesh: ArrayMesh = null, smart_mesh:SmartMesh = null) -> ArrayMesh:
-	# Mesh prüfen
-	if !mesh: mesh = ArrayMesh.new()
-
+static func get_smartmesh_from_objectarray(smartboxes: Array[SmartObject], smart_mesh:SmartMesh = null) -> SmartMesh:
 	# Neues SmartMesh
 	var sm:SmartMesh = SmartMesh.new()
 
@@ -563,24 +558,29 @@ static func get_mesh_from_objectarray(smartboxes: Array[SmartObject], mesh: Arra
 
 	# alle Smart Boxen durchgehen
 	for box in smartboxes:
-		# Wenn keine mesh_id
-		if !box.mesh_id:
-			continue # nächste box
-
 		# Smart Mesh zum Hinzufügen laden
 		var box_mesh:SmartMesh
 		if smart_mesh != null:
 			box_mesh = smart_mesh
 		else:
+			# Wenn keine mesh_id
+			if !box.mesh_id:
+				continue # nächste box
 			box_mesh = get_smartmesh(box.mesh_id)
+
 		if !box_mesh:
 			continue # nächste Box
 		
 		# 1. Rotations-Basis berechnen
 		var rotation_basis: Basis = Basis.looking_at(box.target_forward, box.target_up, false)
 		
-		var vertices: PackedVector3Array
+		var vertices: PackedVector3Array = box_mesh.vertices.duplicate()
 		var normals: PackedVector3Array
+
+		# Modifikatoren anwenden
+		for modifier in box.modifiers:
+			if modifier:
+				vertices = modifier.apply_mod(vertices, box_mesh.base_size, box_mesh.save_area)
 		
 		# Wenn Vertex Verschiebung
 		if box_mesh.is_vertex_scale:
@@ -590,7 +590,7 @@ static func get_mesh_from_objectarray(smartboxes: Array[SmartObject], mesh: Arra
 			var local_target_size: Vector3 = (rotation_basis.inverse() * box.size).abs()
 
 			# Vertices Verschiebung
-			vertices = change_vertex_size(box_mesh.vertices, box_mesh.base_size, local_target_size, box_mesh.save_area)
+			vertices = change_vertex_size(vertices, box_mesh.base_size, local_target_size, box_mesh.save_area)
 
 			# Mesh richtig ausrichten
 			var transform: Transform3D = Transform3D(rotation_basis, box.pos)
@@ -612,7 +612,7 @@ static func get_mesh_from_objectarray(smartboxes: Array[SmartObject], mesh: Arra
 			transform.origin = box.pos
 			
 			# Drehen Skalieren und Verschieben
-			vertices = transform * box_mesh.vertices
+			vertices = transform * vertices
 			
 			# Positionieren
 			#for i in range(vertices.size()):
@@ -646,30 +646,29 @@ static func get_mesh_from_objectarray(smartboxes: Array[SmartObject], mesh: Arra
 		
 		## Farben
 		colors += generate_color_array(vertices.size(), box.color_number)
-		
-		
-	## Teil 2: Soll um 5 Einheiten nach rechts verschoben werden
-	#var teil_2: PackedVector3Array = ressource_rechts.vertices
-	#var verschiebung = Transform3D().translated(Vector3(5.0, 0.0, 0.0))
-	#
-	## Die Multiplikation verschiebt alle Vertices und gibt ein neues Array zurück
-	# var kombiniert: PackedVector3Array = array_links + (verschiebung * array_rechts)
-	# oder var teil_2_verschoben = verschiebung * teil_2
 
-		
+	sm.colors = colors
+	return sm
+
+
+## Liefert ein neues Mesh oder ändert ein Bestehendes Mesh von einem Smartmesh
+static func get_mesh_from_smartmesh(smart_mesh:SmartMesh, mesh:ArrayMesh = null) -> ArrayMesh:
+	# Mesh prüfen
+	if !mesh: mesh = ArrayMesh.new()
+	
 	# ArrayMesh befüllen
 	var mesh_arrays = []
 	mesh_arrays.resize(Mesh.ARRAY_MAX)
-	mesh_arrays[Mesh.ARRAY_VERTEX] = sm.vertices
-	mesh_arrays[Mesh.ARRAY_NORMAL] = sm.normals
-	mesh_arrays[Mesh.ARRAY_INDEX] = sm.indices
-	mesh_arrays[Mesh.ARRAY_COLOR] = colors
+	mesh_arrays[Mesh.ARRAY_VERTEX] = smart_mesh.vertices
+	mesh_arrays[Mesh.ARRAY_NORMAL] = smart_mesh.normals
+	mesh_arrays[Mesh.ARRAY_INDEX] = smart_mesh.indices
+	mesh_arrays[Mesh.ARRAY_COLOR] = smart_mesh.colors
 	
 	# Vorhandene Oberflächen löschen
 	mesh.clear_surfaces()
 	
 	# Direkte Übergabe an das ArrayMesh (Blendschnell, da nativ in C++)
-	if sm.vertices.size() > 0:
+	if smart_mesh.vertices.size() > 0:
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, mesh_arrays)
 
 	# Material setzen
@@ -681,6 +680,25 @@ static func get_mesh_from_objectarray(smartboxes: Array[SmartObject], mesh: Arra
 	
 	# Geändertes Mesh zurückgeben
 	return mesh
+
+
+## Mesh von SmartObject und SmartMesh erzeugen
+static func get_mesh_from_objectarray(smartboxes: Array[SmartObject], mesh: ArrayMesh = null, smart_mesh:SmartMesh = null) -> ArrayMesh:
+	# Neues SmartMesh
+	#var sm:SmartMesh = SmartMesh.new()
+	var sm:SmartMesh = get_smartmesh_from_objectarray(smartboxes, smart_mesh)
+
+		
+	## Teil 2: Soll um 5 Einheiten nach rechts verschoben werden
+	#var teil_2: PackedVector3Array = ressource_rechts.vertices
+	#var verschiebung = Transform3D().translated(Vector3(5.0, 0.0, 0.0))
+	#
+	## Die Multiplikation verschiebt alle Vertices und gibt ein neues Array zurück
+	# var kombiniert: PackedVector3Array = array_links + (verschiebung * array_rechts)
+	# oder var teil_2_verschoben = verschiebung * teil_2
+
+	# Mesh von Smartmesh erstellen
+	return get_mesh_from_smartmesh(sm, mesh)
 
 
 # =======================

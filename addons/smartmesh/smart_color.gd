@@ -59,8 +59,8 @@ static func get_color_by_id(farbnummer: int) -> Color:
 	farbnummer = clamp(farbnummer, 0, 79)
 	
 	# ID in Matrix-Koordinaten zerlegen
-	var theme_idx = farbnummer % 8
-	var shade_idx = int(farbnummer / 8)
+	var shade_idx = farbnummer % 10 
+	var theme_idx = int(farbnummer / 10)
 	
 	# Farbe aus deiner FIXED_PALETTE holen
 	return BASE_COLOR[theme_idx][shade_idx]

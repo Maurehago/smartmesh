@@ -16,6 +16,9 @@ class_name SmartMesh
 
 @export var base_size:Vector3 # Nasis Größe um Skalierung und Vertex-Punkte Verschiebung berechnen zu können
 
+## wird Intern verwendet kurz bevor das Mesh generiert wird
+@export_storage var colors:PackedColorArray = []
+
 ## Hilfsfunktion, um eine Gruppe sicher abzurufen oder neu zu erstellen
 func get_group(group_name: String) -> PackedInt32Array:
 	if not vertex_group.has(group_name):

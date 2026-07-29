@@ -1,6 +1,6 @@
 @tool
 extends SmartGen
-class_name SmartWall
+class_name SmartWall_old
 
 @export_group("Wall")
 @export_range(0.0,5.0,1.0) var wall_mesh_number:float = 0.0:
